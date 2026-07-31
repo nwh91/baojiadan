@@ -1201,7 +1201,7 @@ const state = {
   gzhTopicPremium: { active: false, quantity: 1 },
   vidTopicBasic: { active: false, quantity: 1 },
   vidTopicPremium: { active: false, quantity: 1 },
-  revisionQty: { active: false, quantity: 3 },
+  revisionQty: { active: false, quantity: 1 },
 };
 
 /* ============================================================
@@ -1647,7 +1647,7 @@ function changeVidTopicBasic(d) { state.vidTopicBasic.quantity = Math.max(1, sta
 function toggleVidTopicPremium() { state.vidTopicPremium.active = !state.vidTopicPremium.active; if (!state.vidTopicPremium.active) state.vidTopicPremium.quantity = 1; refreshAll(); }
 function changeVidTopicPremium(d) { state.vidTopicPremium.quantity = Math.max(1, state.vidTopicPremium.quantity + d); refreshAll(); }
 /** 修改加计 */
-function toggleRevisionQty() { state.revisionQty.active = !state.revisionQty.active; if (!state.revisionQty.active) state.revisionQty.quantity = 3; refreshAll(); }
+function toggleRevisionQty() { state.revisionQty.active = !state.revisionQty.active; if (!state.revisionQty.active) state.revisionQty.quantity = 1; refreshAll(); }
 function changeRevisionQty(d) { state.revisionQty.quantity = Math.max(1, state.revisionQty.quantity + d); refreshAll(); }
 
 /** 修改静态图数量 */
@@ -1666,7 +1666,7 @@ function clearAll() {
   state.gzhTopicPremium = { active: false, quantity: 1 };
   state.vidTopicBasic = { active: false, quantity: 1 };
   state.vidTopicPremium = { active: false, quantity: 1 };
-  state.revisionQty = { active: false, quantity: 3 };
+  state.revisionQty = { active: false, quantity: 1 };
   refreshAll();
 }
 
