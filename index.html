@@ -1506,6 +1506,14 @@ function renderVideoServices() {
   for (const [id, name, price] of restItems) {
     html += buildSimpleItem(id, name, price);
   }
+  html += `
+    <div class="service-item disabled">
+      <div class="service-info">
+        <div class="service-name">暂不提供视频素材录制</div>
+      </div>
+      <div class="service-price" style="color:#ccc;">—</div>
+    </div>
+  `;
   container.innerHTML = html;
 }
 
