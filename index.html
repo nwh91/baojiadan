@@ -6,6 +6,145 @@
 <title>报价单</title>
 <style>
 
+
+/* ============================================================
+   小票弹窗
+   ============================================================ */
+.ticket-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  animation: fadeIn 0.2s ease;
+}
+
+.ticket-paper {
+  background: #fffdf9;
+  background-image: linear-gradient(#f9f9f9 1px, transparent 1px);
+  background-size: 100% 24px;
+  max-width: 360px;
+  width: 90%;
+  padding: 32px 24px 20px;
+  border-radius: 3px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+  font-family: var(--font-cn);
+  position: relative;
+  animation: scaleIn 0.25s ease;
+}
+
+.ticket-paper::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 8px; right: 8px;
+  height: 4px;
+  border-top: 1px dashed #e0dcd5;
+}
+
+.ticket-header {
+  text-align: center;
+  margin-bottom: 14px;
+  padding-top: 4px;
+}
+
+.ticket-title {
+  font-size: 0.95rem;
+  color: var(--text-heading);
+  letter-spacing: 0.06em;
+  font-weight: 500;
+}
+
+.ticket-subtitle {
+  font-size: 0.65rem;
+  color: #bbb;
+  font-family: var(--font-en);
+  margin-top: 2px;
+}
+
+.ticket-divider {
+  border: none;
+  border-top: 1px dashed #e0dcd5;
+  margin: 12px 0;
+}
+
+.ticket-items {
+  font-size: 0.73rem;
+  color: var(--text);
+}
+
+.ticket-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  line-height: 1.5;
+}
+
+.ticket-item-label {
+  flex: 1;
+}
+
+.ticket-item-price {
+  font-family: var(--font-en);
+  margin-left: 12px;
+}
+
+.ticket-item-dot {
+  color: #d8d4cc;
+  margin-right: 6px;
+}
+
+.ticket-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-heading);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+.ticket-total-price {
+  font-family: var(--font-en);
+  font-size: 1.1rem;
+}
+
+.ticket-note {
+  text-align: center;
+  font-size: 0.72rem;
+  color: #999;
+  margin-top: 16px;
+  line-height: 1.6;
+}
+
+.ticket-close {
+  display: block;
+  margin: 14px auto 0;
+  padding: 7px 20px;
+  border-radius: 3px;
+  background: #555;
+  color: #fff;
+  border: none;
+  font-size: 0.72rem;
+  cursor: pointer;
+  font-family: var(--font-cn);
+  letter-spacing: 0.05em;
+  transition: background 0.18s ease;
+}
+
+.ticket-close:hover {
+  background: #444;
+}
+
+.ticket-deco {
+  text-align: center;
+  font-size: 0.6rem;
+  color: #d8d4cc;
+  margin-top: 6px;
+  letter-spacing: 0.15em;
+}
+
 /* ============================================================
    QR 放大弹窗
    ============================================================ */
@@ -938,7 +1077,7 @@ body {
       <div class="notes-section">
         <div class="notes-title">NOTE / 注意事项</div>
         <ul class="notes-list">
-          <li>所有稿件接受小范围修改 5 次</li>
+          <li>所有稿件接受小范围修改 5 次，之后每修改一次增加 ¥10</li>
           <li>定稿后结算金额</li>
         </ul>
         <div class="notes-en">Please review the selected services before confirming.</div>
@@ -975,11 +1114,33 @@ body {
   </div>
 </div>
 
-<!-- 确认弹窗（隐藏） -->
+<!-- 小票弹窗（隐藏） -->
+<div class="ticket-overlay" id="ticket-overlay" style="display:none;" onclick="closeTicket()">
+  <div class="ticket-paper" onclick="event.stopPropagation()">
+    <div class="ticket-header">
+      <div class="ticket-title">♡ 服务需求确认单</div>
+      <div class="ticket-subtitle">Order Confirmation</div>
+    </div>
+    <hr class="ticket-divider">
+    <div class="ticket-items" id="ticket-items"></div>
+    <hr class="ticket-divider">
+    <div class="ticket-total">
+      <span>合计</span>
+      <span class="ticket-total-price" id="ticket-total-price">¥0</span>
+    </div>
+    <div class="ticket-note">
+      已整理好本次服务需求 ♡<br>请联系我确认具体内容。
+    </div>
+    <button class="ticket-close" onclick="closeTicket()">确 认</button>
+    <div class="ticket-deco">✦ · ♡ · ✦</div>
+  </div>
+</div>
+
+<!-- 旧确认弹窗（保留兼容） -->
 <div class="modal-overlay" id="modal-overlay" style="display:none;">
   <div class="modal-box">
     <div class="modal-icon">♡</div>
-    <div class="modal-msg">已整理好本次服务需求<br>请联系我确认具体内容。</div>
+    <div class="modal-msg">请先选择需要的服务项目 ♡</div>
     <button class="modal-close" onclick="closeModal()">好的</button>
   </div>
 </div>
@@ -997,7 +1158,8 @@ body {
  */
 const PRICE_CONFIG = {
   gzh: {
-    topic:       { price: 50 },   // 公众号｜选题
+    topicSimple: { price: 50 },   // 公众号｜选题（标准）
+    topicPer:    { price: 20 },   // 公众号｜选题（按数量，¥20/个）
     outline:     { price: 50 },   // 公众号｜大纲
     copy500:     { price: 100 },  // 公众号｜纯文案｜500字以内
     copy900:     { price: 150 },  // 公众号｜纯文案｜900字以内
@@ -1007,9 +1169,10 @@ const PRICE_CONFIG = {
     cover:       { price: 50 },   // 公众号｜封面AI参考图
   },
   video: {
-    topic:   { price: 50 },   // 视频｜选题
+    topicSimple: { price: 50 },   // 视频｜选题（标准）
+    topicPer:    { price: 20 },   // 视频｜选题（按数量，¥20/个）
     outline: { price: 50 },   // 视频｜大纲
-    script:  { price: 200 },  // 视频｜脚本
+    script:  { price: 249 },  // 视频｜脚本
     publish: { price: 50 },   // 视频｜发布文案
     cover:   { price: 50 },   // 视频｜封面AI参考图
   },
@@ -1027,6 +1190,9 @@ const state = {
   layoutAll: false,
   // 排版｜静态图素材制作：{ active: boolean, quantity: number }
   layoutStatic: { active: false, quantity: 1 },
+  // 选题按数量
+  gzhTopicQty: { active: false, quantity: 1 },
+  vidTopicQty: { active: false, quantity: 1 },
 };
 
 /* ============================================================
@@ -1042,10 +1208,10 @@ function calcTotal() {
   const ps = PRICE_CONFIG;
 
   // 简单勾选的项目
-  if (state.selected.has('gzh-topic'))     total += ps.gzh.topic.price;
+  if (state.selected.has('gzh-topic'))     total += ps.gzh.topicSimple.price;
   if (state.selected.has('gzh-outline'))   total += ps.gzh.outline.price;
   if (state.selected.has('gzh-cover'))     total += ps.gzh.cover.price;
-  if (state.selected.has('vid-topic'))     total += ps.video.topic.price;
+  if (state.selected.has('vid-topic'))     total += ps.video.topicSimple.price;
   if (state.selected.has('vid-outline'))   total += ps.video.outline.price;
   if (state.selected.has('vid-script'))    total += ps.video.script.price;
   if (state.selected.has('vid-publish'))   total += ps.video.publish.price;
@@ -1059,6 +1225,8 @@ function calcTotal() {
   // 排版
   if (state.layoutAll) total += ps.gzh.layoutAll.price;
   if (state.layoutStatic.active) total += ps.gzh.layoutImg.price * state.layoutStatic.quantity;
+  if (state.gzhTopicQty.active) total += ps.gzh.topicPer.price * state.gzhTopicQty.quantity;
+  if (state.vidTopicQty.active) total += ps.video.topicPer.price * state.vidTopicQty.quantity;
 
   return total;
 }
@@ -1069,7 +1237,7 @@ function getSelectedItems() {
   const ps = PRICE_CONFIG;
 
   if (state.selected.has('gzh-topic'))
-    items.push({ label: '公众号｜选题', price: ps.gzh.topic.price });
+    items.push({ label: '公众号｜选题（标准）', price: ps.gzh.topicSimple.price });
   if (state.selected.has('gzh-outline'))
     items.push({ label: '公众号｜大纲', price: ps.gzh.outline.price });
 
@@ -1085,17 +1253,21 @@ function getSelectedItems() {
   if (state.layoutStatic.active && state.layoutStatic.quantity > 0)
     items.push({ label: `公众号｜排版｜静态图素材 × ${state.layoutStatic.quantity}`, price: ps.gzh.layoutImg.price * state.layoutStatic.quantity });
 
+  if (state.gzhTopicQty.active && state.gzhTopicQty.quantity > 0)
+    items.push({ label: '公众号｜选题 × ' + state.gzhTopicQty.quantity, price: ps.gzh.topicPer.price * state.gzhTopicQty.quantity });
   if (state.selected.has('gzh-cover'))
     items.push({ label: '公众号｜封面 AI 参考图', price: ps.gzh.cover.price });
 
   if (state.selected.has('vid-topic'))
-    items.push({ label: '视频｜选题', price: ps.video.topic.price });
+    items.push({ label: '视频｜选题（标准）', price: ps.video.topicSimple.price });
   if (state.selected.has('vid-outline'))
     items.push({ label: '视频｜大纲', price: ps.video.outline.price });
   if (state.selected.has('vid-script'))
     items.push({ label: '视频｜脚本', price: ps.video.script.price });
   if (state.selected.has('vid-publish'))
     items.push({ label: '视频｜发布文案', price: ps.video.publish.price });
+  if (state.vidTopicQty.active && state.vidTopicQty.quantity > 0)
+    items.push({ label: '视频｜选题 × ' + state.vidTopicQty.quantity, price: ps.video.topicPer.price * state.vidTopicQty.quantity });
   if (state.selected.has('vid-cover'))
     items.push({ label: '视频｜封面 AI 参考图', price: ps.video.cover.price });
 
@@ -1107,7 +1279,9 @@ function hasAnySelection() {
   return state.selected.size > 0 ||
     state.copyTier !== null ||
     state.layoutAll ||
-    state.layoutStatic.active;
+    state.layoutStatic.active ||
+    state.gzhTopicQty.active ||
+    state.vidTopicQty.active;
 }
 
 /* ============================================================
@@ -1122,14 +1296,48 @@ function renderGzhServices() {
   let html = '';
 
   // ① 选题
-  html += buildSimpleItem('gzh-topic', '选题', ps.topic.price);
+  html += `
+    <div class="service-item" style="flex-wrap:wrap;cursor:default;" ontouchstart="event.stopPropagation()" onmousedown="event.stopPropagation()">
+      <div class="service-info" style="width:100%;">
+        <div class="service-name">选题</div>
+        <div class="service-desc">按交付选题数量计取，不受选题采纳结果影响</div>
+        <div class="sub-options" style="margin-top:8px;">
+          <div class="service-item ` + (state.selected.has('gzh-topic') ? 'selected' : '') + `"
+               style="margin-bottom:6px;"
+               onclick="event.stopPropagation();toggleSimple('gzh-topic')">
+            <div class="service-info">
+              <div class="service-name">标准选题</div>
+            </div>
+            <div class="service-price">¥` + ps.topicSimple.price + `</div>
+          </div>
+          <div class="service-item ` + (state.gzhTopicQty.active ? 'selected' : '') + `"
+               style="margin-bottom:6px;"
+               onclick="event.stopPropagation();toggleGzhTopicQty()">
+            <div class="service-info">
+              <div class="service-name">按数量选题</div>
+            </div>
+            <div class="service-price">¥` + ps.topicPer.price + ` / 个</div>
+          </div>
+          ` + (state.gzhTopicQty.active ? `
+          <div style="display:flex;align-items:center;padding:4px 0 2px 14px;gap:10px;" onclick="event.stopPropagation();">
+            <span style="font-size:0.75rem;color:#999;">数量：</span>
+            <button class="quantity-btn" onclick="event.stopPropagation();changeGzhTopicQty(-1)">−</button>
+            <span class="quantity-num">` + state.gzhTopicQty.quantity + `</span>
+            <button class="quantity-btn" onclick="event.stopPropagation();changeGzhTopicQty(1)">＋</button>
+            <span style="font-size:0.75rem;color:#999;margin-left:4px;">个</span>
+          </div>
+          ` : '') + `
+        </div>
+      </div>
+    </div>
+  `;
 
   // ② 大纲
   html += buildSimpleItem('gzh-outline', '大纲', ps.outline.price);
 
   // ③ 纯文案（互斥档位）
   html += `
-    <div class="service-item" style="flex-wrap:wrap;cursor:default;" onmousedown="event.preventDefault()">
+    <div class="service-item" style="flex-wrap:wrap;cursor:default;" ontouchstart="event.stopPropagation()" onmousedown="event.stopPropagation()">
       <div class="service-info">
         <div class="service-name">纯文案</div>
         <div class="service-desc">需要提供大纲，不包含排版 · 字数统计包含摘要和标题</div>
@@ -1153,7 +1361,7 @@ function renderGzhServices() {
 
   // ④ 排版
   html += `
-    <div class="service-item" style="flex-wrap:wrap;cursor:default;" onmousedown="event.preventDefault()">
+    <div class="service-item" style="flex-wrap:wrap;cursor:default;" ontouchstart="event.stopPropagation()" onmousedown="event.stopPropagation()">
       <div class="service-info" style="width:100%;">
         <div class="service-name">排版</div>
         <div class="service-desc">不包含文案</div>
@@ -1209,7 +1417,7 @@ function renderVideoServices() {
   const ps = PRICE_CONFIG.video;
 
   const items = [
-    ['vid-topic',   '选题',       ps.topic.price],
+    ['vid-topic',   '选题（标准）', ps.topicSimple.price],
     ['vid-outline', '大纲',       ps.outline.price],
     ['vid-script',  '脚本',       ps.script.price],
     ['vid-publish', '发布文案',   ps.publish.price],
@@ -1217,7 +1425,45 @@ function renderVideoServices() {
   ];
 
   let html = '';
-  for (const [id, name, price] of items) {
+  // 选题 — 子选项结构
+  html += `
+    <div class="service-item" style="flex-wrap:wrap;cursor:default;" ontouchstart="event.stopPropagation()" onmousedown="event.stopPropagation()">
+      <div class="service-info" style="width:100%;">
+        <div class="service-name">选题</div>
+        <div class="service-desc">按交付选题数量计取，不受选题采纳结果影响</div>
+        <div class="sub-options" style="margin-top:8px;">
+          <div class="service-item ` + (state.selected.has('vid-topic') ? 'selected' : '') + `"
+               style="margin-bottom:6px;"
+               onclick="event.stopPropagation();toggleSimple('vid-topic')">
+            <div class="service-info">
+              <div class="service-name">标准选题</div>
+            </div>
+            <div class="service-price">¥` + ps.topicSimple.price + `</div>
+          </div>
+          <div class="service-item ` + (state.vidTopicQty.active ? 'selected' : '') + `"
+               style="margin-bottom:6px;"
+               onclick="event.stopPropagation();toggleVidTopicQty()">
+            <div class="service-info">
+              <div class="service-name">按数量选题</div>
+            </div>
+            <div class="service-price">¥` + ps.topicPer.price + ` / 个</div>
+          </div>
+          ` + (state.vidTopicQty.active ? `
+          <div style="display:flex;align-items:center;padding:4px 0 2px 14px;gap:10px;" onclick="event.stopPropagation();">
+            <span style="font-size:0.75rem;color:#999;">数量：</span>
+            <button class="quantity-btn" onclick="event.stopPropagation();changeVidTopicQty(-1)">−</button>
+            <span class="quantity-num">` + state.vidTopicQty.quantity + `</span>
+            <button class="quantity-btn" onclick="event.stopPropagation();changeVidTopicQty(1)">＋</button>
+            <span style="font-size:0.75rem;color:#999;margin-left:4px;">个</span>
+          </div>
+          ` : '') + `
+        </div>
+      </div>
+    </div>
+  `;
+  // 其余视频服务
+  const restItems = items.slice(1);
+  for (const [id, name, price] of restItems) {
     html += buildSimpleItem(id, name, price);
   }
   container.innerHTML = html;
@@ -1323,6 +1569,28 @@ function toggleLayoutStatic() {
   refreshAll();
 }
 
+/** 切换公众号选题数量 */
+function toggleGzhTopicQty() {
+  state.gzhTopicQty.active = !state.gzhTopicQty.active;
+  if (!state.gzhTopicQty.active) state.gzhTopicQty.quantity = 1;
+  refreshAll();
+}
+function changeGzhTopicQty(delta) {
+  state.gzhTopicQty.quantity = Math.max(1, state.gzhTopicQty.quantity + delta);
+  refreshAll();
+}
+
+/** 切换视频选题数量 */
+function toggleVidTopicQty() {
+  state.vidTopicQty.active = !state.vidTopicQty.active;
+  if (!state.vidTopicQty.active) state.vidTopicQty.quantity = 1;
+  refreshAll();
+}
+function changeVidTopicQty(delta) {
+  state.vidTopicQty.quantity = Math.max(1, state.vidTopicQty.quantity + delta);
+  refreshAll();
+}
+
 /** 修改静态图数量 */
 function changeLayoutQty(delta) {
   state.layoutStatic.quantity = Math.max(1, state.layoutStatic.quantity + delta);
@@ -1335,23 +1603,38 @@ function clearAll() {
   state.copyTier = null;
   state.layoutAll = false;
   state.layoutStatic = { active: false, quantity: 1 };
+  state.gzhTopicQty = { active: false, quantity: 1 };
+  state.vidTopicQty = { active: false, quantity: 1 };
   refreshAll();
 }
 
 /** 确认需求 — 弹出提示 */
 function confirmOrder() {
   if (!hasAnySelection()) {
-    // 如果没有选择任何服务，给出友好提示
     const modalOverlay = document.getElementById('modal-overlay');
-    const modalMsg = document.querySelector('.modal-msg');
-    modalMsg.innerHTML = '请先选择需要的服务项目 ♡';
     modalOverlay.style.display = 'flex';
     return;
   }
-  const modalOverlay = document.getElementById('modal-overlay');
-  const modalMsg = document.querySelector('.modal-msg');
-  modalMsg.innerHTML = '已整理好本次服务需求 ♡<br>请联系我确认具体内容。';
-  modalOverlay.style.display = 'flex';
+  // 填充小票内容
+  const items = getSelectedItems();
+  const total = calcTotal();
+  let itemsHtml = '';
+  for (const item of items) {
+    itemsHtml += `
+      <div class="ticket-item">
+        <span class="ticket-item-dot">·</span>
+        <span class="ticket-item-label">` + item.label + `</span>
+        <span class="ticket-item-price">¥` + item.price + `</span>
+      </div>
+    `;
+  }
+  document.getElementById('ticket-items').innerHTML = itemsHtml;
+  document.getElementById('ticket-total-price').textContent = '¥' + total;
+  document.getElementById('ticket-overlay').style.display = 'flex';
+}
+
+function closeTicket() {
+  document.getElementById('ticket-overlay').style.display = 'none';
 }
 
 function closeModal() {
@@ -1362,6 +1645,9 @@ function closeModal() {
 document.addEventListener('click', function(e) {
   if (e.target.id === 'modal-overlay') {
     closeModal();
+  }
+  if (e.target.id === 'ticket-overlay') {
+    closeTicket();
   }
 });
 
