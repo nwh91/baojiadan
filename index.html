@@ -1054,6 +1054,7 @@ body {
         <div class="category-title">其他</div>
         <div class="other-content" style="flex-direction:column;gap:12px;">
           <div class="service-list" id="service-list-other" style="width:100%;">
+            <div class="note-text" style="margin-bottom:8px;padding-left:0;color:#aaa;font-style:normal;">所有稿件接受小范围修改 5 次，之后每修改一次增加 ￥10</div>
             <!-- 修改加计 — JS动态渲染 -->
           </div>
           <div class="other-text">
@@ -1080,8 +1081,8 @@ body {
       <div class="notes-section">
         <div class="notes-title">NOTE / 注意事项</div>
         <ul class="notes-list">
-          <li>所有稿件接受小范围修改 5 次，之后每修改一次增加 ￥10</li>
           <li>定稿即结算金额，不受采纳结果影响</li>
+          <li>选题被客户确认选中，补付选用附加费 ￥150，单个选题总计 ￥200，不含后续内容落地工作</li>
         </ul>
         <div class="notes-en">Please review the selected services before confirming.</div>
       </div>
@@ -1167,7 +1168,7 @@ const PRICE_CONFIG = {
     copy500:      { price: 210 },  // 公众号｜纯文案｜500字以内
     copy900:      { price: 260 },  // 公众号｜纯文案｜900字以内
     copy900plus:  { price: 310 },  // 公众号｜纯文案｜超过900字
-    layoutAll:    { price: 210 },  // 公众号｜排版｜提供全部素材
+    layoutAll:    { price: 210 },  // 公众号｜纯排版
     layoutImg:    { price: 15 },   // 公众号｜排版｜静态图素材制作（每张）
     cover:        { price: 60 },   // 公众号｜封面AI参考图
   },
@@ -1257,7 +1258,7 @@ function getSelectedItems() {
     items.push({ label: '公众号｜纯文案｜超过900字', price: ps.gzh.copy900plus.price });
 
   if (state.layoutAll)
-    items.push({ label: '公众号｜排版｜提供全部素材', price: ps.gzh.layoutAll.price });
+    items.push({ label: '公众号｜纯排版', price: ps.gzh.layoutAll.price });
   if (state.layoutStatic.active && state.layoutStatic.quantity > 0)
     items.push({ label: `公众号｜排版｜静态图素材 × ${state.layoutStatic.quantity}`, price: ps.gzh.layoutImg.price * state.layoutStatic.quantity });
 
@@ -1392,14 +1393,14 @@ function renderGzhServices() {
     <div class="service-item" style="flex-wrap:wrap;cursor:default;" ontouchstart="event.stopPropagation()" onmousedown="event.stopPropagation()">
       <div class="service-info" style="width:100%;">
         <div class="service-name">排版</div>
-        <div class="service-desc">不包含文案</div>
+        <div class="service-desc">不包含文案 · 提供全部素材即可</div>
         <div class="sub-options" style="margin-top:8px;">
           <!-- 提供全部素材 -->
           <div class="service-item ${state.layoutAll ? 'selected' : ''}"
                style="margin-bottom:6px;"
                onclick="event.stopPropagation();toggleLayoutAll()">
             <div class="service-info">
-              <div class="service-name">提供全部素材</div>
+              <div class="service-name">纯排版</div>
             </div>
             <div class="service-price">￥${ps.layoutAll.price}</div>
           </div>
