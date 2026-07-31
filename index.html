@@ -214,7 +214,7 @@
 }
 
 html {
-  font-size: 14px;
+  font-size: 15px;
 }
 
 body {
@@ -293,7 +293,7 @@ body {
 }
 
 .header-title {
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   font-weight: 500;
   color: var(--text-heading);
   letter-spacing: 0.06em;
@@ -330,7 +330,7 @@ body {
 }
 
 .category-title {
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 600;
   color: var(--text-heading);
   letter-spacing: 0.08em;
@@ -407,7 +407,7 @@ body {
 }
 
 .service-name {
-  font-size: 0.85rem;
+  font-size: 0.92rem;
   color: var(--text);
   font-weight: 400;
 }
@@ -1052,7 +1052,10 @@ body {
       <!-- 其他 -->
       <div class="other-section">
         <div class="category-title">其他</div>
-        <div class="other-content">
+        <div class="other-content" style="flex-direction:column;gap:12px;">
+          <div class="service-list" id="service-list-other" style="width:100%;">
+            <!-- 修改加计 — JS动态渲染 -->
+          </div>
           <div class="other-text">
             <p>如有其他需求</p>
             <p>请联系飞书 / 邮件</p>
@@ -1158,21 +1161,26 @@ body {
  */
 const PRICE_CONFIG = {
   gzh: {
-    topicPer:    { price: 30 },   // 公众号｜选题（￥30/个）
-    outline:     { price: 60 },   // 公众号｜大纲
-    copy500:     { price: 110 },  // 公众号｜纯文案｜500字以内
-    copy900:     { price: 160 },  // 公众号｜纯文案｜900字以内
-    copy900plus: { price: 210 },  // 公众号｜纯文案｜超过900字
-    layoutAll:   { price: 110 },  // 公众号｜排版｜提供全部素材
-    layoutImg:   { price: 10 },    // 公众号｜排版｜静态图素材制作（每张）
-    cover:       { price: 60 },   // 公众号｜封面AI参考图
+    topicBasic:   { price: 50 },   // 公众号｜纯选题输出（￥50/个）
+    topicPremium: { price: 200 },  // 公众号｜选题选用+推进制作（￥200/个）
+    outline:      { price: 60 },   // 公众号｜大纲
+    copy500:      { price: 210 },  // 公众号｜纯文案｜500字以内
+    copy900:      { price: 260 },  // 公众号｜纯文案｜900字以内
+    copy900plus:  { price: 310 },  // 公众号｜纯文案｜超过900字
+    layoutAll:    { price: 210 },  // 公众号｜排版｜提供全部素材
+    layoutImg:    { price: 15 },   // 公众号｜排版｜静态图素材制作（每张）
+    cover:        { price: 60 },   // 公众号｜封面AI参考图
   },
   video: {
-    topicPer:    { price: 30 },   // 视频｜选题（￥30/个）
-    outline: { price: 60 },   // 视频｜大纲
-    script:  { price: 259 },  // 视频｜脚本
-    publish: { price: 60 },   // 视频｜发布文案
-    cover:   { price: 60 },   // 视频｜封面AI参考图
+    topicBasic:   { price: 50 },   // 视频｜纯选题输出（￥50/个）
+    topicPremium: { price: 200 },  // 视频｜选题选用+推进制作（￥200/个）
+    outline:  { price: 60 },   // 视频｜大纲
+    script:   { price: 359 },  // 视频｜脚本
+    publish:  { price: 60 },   // 视频｜发布文案
+    cover:    { price: 60 },   // 视频｜封面AI参考图
+  },
+  other: {
+    revision: { price: 10 },   // 修改加计（第6次起，￥10/次）
   },
 };
 
@@ -1189,8 +1197,11 @@ const state = {
   // 排版｜静态图素材制作：{ active: boolean, quantity: number }
   layoutStatic: { active: false, quantity: 1 },
   // 选题按数量
-  gzhTopicQty: { active: false, quantity: 1 },
-  vidTopicQty: { active: false, quantity: 1 },
+  gzhTopicBasic: { active: false, quantity: 1 },
+  gzhTopicPremium: { active: false, quantity: 1 },
+  vidTopicBasic: { active: false, quantity: 1 },
+  vidTopicPremium: { active: false, quantity: 1 },
+  revisionQty: { active: false, quantity: 1 },
 };
 
 /* ============================================================
@@ -1221,8 +1232,11 @@ function calcTotal() {
   // 排版
   if (state.layoutAll) total += ps.gzh.layoutAll.price;
   if (state.layoutStatic.active) total += ps.gzh.layoutImg.price * state.layoutStatic.quantity;
-  if (state.gzhTopicQty.active) total += ps.gzh.topicPer.price * state.gzhTopicQty.quantity;
-  if (state.vidTopicQty.active) total += ps.video.topicPer.price * state.vidTopicQty.quantity;
+  if (state.gzhTopicBasic.active) total += ps.gzh.topicBasic.price * state.gzhTopicBasic.quantity;
+  if (state.gzhTopicPremium.active) total += ps.gzh.topicPremium.price * state.gzhTopicPremium.quantity;
+  if (state.vidTopicBasic.active) total += ps.video.topicBasic.price * state.vidTopicBasic.quantity;
+  if (state.vidTopicPremium.active) total += ps.video.topicPremium.price * state.vidTopicPremium.quantity;
+  if (state.revisionQty.active) total += ps.other.revision.price * state.revisionQty.quantity;
 
   return total;
 }
@@ -1247,8 +1261,10 @@ function getSelectedItems() {
   if (state.layoutStatic.active && state.layoutStatic.quantity > 0)
     items.push({ label: `公众号｜排版｜静态图素材 × ${state.layoutStatic.quantity}`, price: ps.gzh.layoutImg.price * state.layoutStatic.quantity });
 
-  if (state.gzhTopicQty.active && state.gzhTopicQty.quantity > 0)
-    items.push({ label: '公众号｜选题 × ' + state.gzhTopicQty.quantity, price: ps.gzh.topicPer.price * state.gzhTopicQty.quantity });
+  if (state.gzhTopicBasic.active && state.gzhTopicBasic.quantity > 0)
+    items.push({ label: '公众号｜纯选题输出 × ' + state.gzhTopicBasic.quantity, price: ps.gzh.topicBasic.price * state.gzhTopicBasic.quantity });
+  if (state.gzhTopicPremium.active && state.gzhTopicPremium.quantity > 0)
+    items.push({ label: '公众号｜选题选用+推进 × ' + state.gzhTopicPremium.quantity, price: ps.gzh.topicPremium.price * state.gzhTopicPremium.quantity });
   if (state.selected.has('gzh-cover'))
     items.push({ label: '公众号｜封面 AI 参考图', price: ps.gzh.cover.price });
 
@@ -1258,8 +1274,12 @@ function getSelectedItems() {
     items.push({ label: '视频｜脚本', price: ps.video.script.price });
   if (state.selected.has('vid-publish'))
     items.push({ label: '视频｜发布文案', price: ps.video.publish.price });
-  if (state.vidTopicQty.active && state.vidTopicQty.quantity > 0)
-    items.push({ label: '视频｜选题 × ' + state.vidTopicQty.quantity, price: ps.video.topicPer.price * state.vidTopicQty.quantity });
+  if (state.vidTopicBasic.active && state.vidTopicBasic.quantity > 0)
+    items.push({ label: '视频｜纯选题输出 × ' + state.vidTopicBasic.quantity, price: ps.video.topicBasic.price * state.vidTopicBasic.quantity });
+  if (state.vidTopicPremium.active && state.vidTopicPremium.quantity > 0)
+    items.push({ label: '视频｜选题选用+推进 × ' + state.vidTopicPremium.quantity, price: ps.video.topicPremium.price * state.vidTopicPremium.quantity });
+  if (state.revisionQty.active && state.revisionQty.quantity > 0)
+    items.push({ label: '修改加计（第6次起） × ' + state.revisionQty.quantity, price: ps.other.revision.price * state.revisionQty.quantity });
   if (state.selected.has('vid-cover'))
     items.push({ label: '视频｜封面 AI 参考图', price: ps.video.cover.price });
 
@@ -1272,8 +1292,11 @@ function hasAnySelection() {
     state.copyTier !== null ||
     state.layoutAll ||
     state.layoutStatic.active ||
-    state.gzhTopicQty.active ||
-    state.vidTopicQty.active;
+    state.gzhTopicBasic.active ||
+    state.gzhTopicPremium.active ||
+    state.vidTopicBasic.active ||
+    state.vidTopicPremium.active ||
+    state.revisionQty.active;
 }
 
 /* ============================================================
@@ -1287,23 +1310,53 @@ function renderGzhServices() {
 
   let html = '';
 
-  // ① 选题
+  // ① 选题（双档）
   html += `
-    <div class="service-item ` + (state.gzhTopicQty.active ? 'selected' : '') + `" style="flex-wrap:wrap;" onclick="event.stopPropagation();toggleGzhTopicQty()">
-      <div class="service-info">
+    <div class="service-item" style="flex-wrap:wrap;cursor:default;" ontouchstart="event.stopPropagation()" onmousedown="event.stopPropagation()">
+      <div class="service-info" style="width:100%;">
         <div class="service-name">选题</div>
-        <div class="service-desc">￥` + ps.topicPer.price + ` / 个 · 按交付选题数量计取，不受选题采纳结果影响</div>
-        ` + (state.gzhTopicQty.active ? `
-        <div style="display:flex;align-items:center;padding:6px 0 2px 0;gap:10px;" onclick="event.stopPropagation();">
-          <span style="font-size:0.75rem;color:#999;">数量：</span>
-          <button class="quantity-btn" onclick="event.stopPropagation();changeGzhTopicQty(-1)">−</button>
-          <span class="quantity-num">` + state.gzhTopicQty.quantity + `</span>
-          <button class="quantity-btn" onclick="event.stopPropagation();changeGzhTopicQty(1)">＋</button>
-          <span style="font-size:0.75rem;color:#999;margin-left:4px;">个</span>
+        <div class="service-desc">按交付选题数量计取，不受选用结果影响</div>
+        <div class="sub-options" style="margin-top:8px;">
+          <!-- 纯选题输出 -->
+          <div class="service-item ` + (state.gzhTopicBasic.active ? 'selected' : '') + `"
+               style="margin-bottom:6px;"
+               onclick="event.stopPropagation();toggleGzhTopicBasic()">
+            <div class="service-info">
+              <div class="service-name">纯选题输出</div>
+              <div class="service-desc">交付即结算，不含后续制作</div>
+            </div>
+            <div class="service-price">￥` + ps.topicBasic.price + ` / 个</div>
+          </div>
+          ` + (state.gzhTopicBasic.active ? `
+          <div style="display:flex;align-items:center;padding:4px 0 6px 14px;gap:10px;" onclick="event.stopPropagation();">
+            <span style="font-size:0.75rem;color:#999;">数量：</span>
+            <button class="quantity-btn" onclick="event.stopPropagation();changeGzhTopicBasic(-1)">−</button>
+            <span class="quantity-num">` + state.gzhTopicBasic.quantity + `</span>
+            <button class="quantity-btn" onclick="event.stopPropagation();changeGzhTopicBasic(1)">＋</button>
+            <span style="font-size:0.75rem;color:#999;margin-left:4px;">个</span>
+          </div>
+          ` : '') + `
+          <!-- 选题选用+推进 -->
+          <div class="service-item ` + (state.gzhTopicPremium.active ? 'selected' : '') + `"
+               style="margin-bottom:6px;"
+               onclick="event.stopPropagation();toggleGzhTopicPremium()">
+            <div class="service-info">
+              <div class="service-name">选题选用 + 推进制作</div>
+              <div class="service-desc">客户选用并委托后续内容，已含选题费不另收</div>
+            </div>
+            <div class="service-price">￥` + ps.topicPremium.price + ` / 个</div>
+          </div>
+          ` + (state.gzhTopicPremium.active ? `
+          <div style="display:flex;align-items:center;padding:4px 0 2px 14px;gap:10px;" onclick="event.stopPropagation();">
+            <span style="font-size:0.75rem;color:#999;">数量：</span>
+            <button class="quantity-btn" onclick="event.stopPropagation();changeGzhTopicPremium(-1)">−</button>
+            <span class="quantity-num">` + state.gzhTopicPremium.quantity + `</span>
+            <button class="quantity-btn" onclick="event.stopPropagation();changeGzhTopicPremium(1)">＋</button>
+            <span style="font-size:0.75rem;color:#999;margin-left:4px;">个</span>
+          </div>
+          ` : '') + `
         </div>
-        ` : '') + `
       </div>
-      <div class="service-price">` + (state.gzhTopicQty.active ? '￥' + (ps.topicPer.price * state.gzhTopicQty.quantity) : '—') + `</div>
     </div>
   `;
 
@@ -1399,23 +1452,51 @@ function renderVideoServices() {
   ];
 
   let html = '';
-  // 选题 — 数量选择器
+  // 选题 — 双档
   html += `
-    <div class="service-item ` + (state.vidTopicQty.active ? 'selected' : '') + `" style="flex-wrap:wrap;" onclick="event.stopPropagation();toggleVidTopicQty()">
-      <div class="service-info">
+    <div class="service-item" style="flex-wrap:wrap;cursor:default;" ontouchstart="event.stopPropagation()" onmousedown="event.stopPropagation()">
+      <div class="service-info" style="width:100%;">
         <div class="service-name">选题</div>
-        <div class="service-desc">￥` + ps.topicPer.price + ` / 个 · 按交付选题数量计取，不受选题采纳结果影响</div>
-        ` + (state.vidTopicQty.active ? `
-        <div style="display:flex;align-items:center;padding:6px 0 2px 0;gap:10px;" onclick="event.stopPropagation();">
-          <span style="font-size:0.75rem;color:#999;">数量：</span>
-          <button class="quantity-btn" onclick="event.stopPropagation();changeVidTopicQty(-1)">−</button>
-          <span class="quantity-num">` + state.vidTopicQty.quantity + `</span>
-          <button class="quantity-btn" onclick="event.stopPropagation();changeVidTopicQty(1)">＋</button>
-          <span style="font-size:0.75rem;color:#999;margin-left:4px;">个</span>
+        <div class="service-desc">按交付选题数量计取，不受选用结果影响</div>
+        <div class="sub-options" style="margin-top:8px;">
+          <div class="service-item ` + (state.vidTopicBasic.active ? 'selected' : '') + `"
+               style="margin-bottom:6px;"
+               onclick="event.stopPropagation();toggleVidTopicBasic()">
+            <div class="service-info">
+              <div class="service-name">纯选题输出</div>
+              <div class="service-desc">交付即结算，不含后续制作</div>
+            </div>
+            <div class="service-price">￥` + ps.topicBasic.price + ` / 个</div>
+          </div>
+          ` + (state.vidTopicBasic.active ? `
+          <div style="display:flex;align-items:center;padding:4px 0 6px 14px;gap:10px;" onclick="event.stopPropagation();">
+            <span style="font-size:0.75rem;color:#999;">数量：</span>
+            <button class="quantity-btn" onclick="event.stopPropagation();changeVidTopicBasic(-1)">−</button>
+            <span class="quantity-num">` + state.vidTopicBasic.quantity + `</span>
+            <button class="quantity-btn" onclick="event.stopPropagation();changeVidTopicBasic(1)">＋</button>
+            <span style="font-size:0.75rem;color:#999;margin-left:4px;">个</span>
+          </div>
+          ` : '') + `
+          <div class="service-item ` + (state.vidTopicPremium.active ? 'selected' : '') + `"
+               style="margin-bottom:6px;"
+               onclick="event.stopPropagation();toggleVidTopicPremium()">
+            <div class="service-info">
+              <div class="service-name">选题选用 + 推进制作</div>
+              <div class="service-desc">客户选用并委托后续内容，已含选题费不另收</div>
+            </div>
+            <div class="service-price">￥` + ps.topicPremium.price + ` / 个</div>
+          </div>
+          ` + (state.vidTopicPremium.active ? `
+          <div style="display:flex;align-items:center;padding:4px 0 2px 14px;gap:10px;" onclick="event.stopPropagation();">
+            <span style="font-size:0.75rem;color:#999;">数量：</span>
+            <button class="quantity-btn" onclick="event.stopPropagation();changeVidTopicPremium(-1)">−</button>
+            <span class="quantity-num">` + state.vidTopicPremium.quantity + `</span>
+            <button class="quantity-btn" onclick="event.stopPropagation();changeVidTopicPremium(1)">＋</button>
+            <span style="font-size:0.75rem;color:#999;margin-left:4px;">个</span>
+          </div>
+          ` : '') + `
         </div>
-        ` : '') + `
       </div>
-      <div class="service-price">` + (state.vidTopicQty.active ? '￥' + (ps.topicPer.price * state.vidTopicQty.quantity) : '—') + `</div>
     </div>
   `;
   // 其余视频服务
@@ -1437,6 +1518,32 @@ function buildSimpleItem(id, name, price) {
       <div class="service-price">￥${price}</div>
     </div>
   `;
+}
+
+/** 渲染其他服务 */
+function renderOtherServices() {
+  const container = document.getElementById('service-list-other');
+  const ps = PRICE_CONFIG.other;
+  let html = '';
+  html += `
+    <div class="service-item ` + (state.revisionQty.active ? 'selected' : '') + `" style="flex-wrap:wrap;" onclick="event.stopPropagation();toggleRevisionQty()">
+      <div class="service-info">
+        <div class="service-name">修改加计</div>
+        <div class="service-desc">第 6 次起计费，￥` + ps.revision.price + ` / 次</div>
+        ` + (state.revisionQty.active ? `
+        <div style="display:flex;align-items:center;padding:6px 0 2px 0;gap:10px;" onclick="event.stopPropagation();">
+          <span style="font-size:0.75rem;color:#999;">次数：</span>
+          <button class="quantity-btn" onclick="event.stopPropagation();changeRevisionQty(-1)">−</button>
+          <span class="quantity-num">` + state.revisionQty.quantity + `</span>
+          <button class="quantity-btn" onclick="event.stopPropagation();changeRevisionQty(1)">＋</button>
+          <span style="font-size:0.75rem;color:#999;margin-left:4px;">次</span>
+        </div>
+        ` : '') + `
+      </div>
+      <div class="service-price">` + (state.revisionQty.active ? '￥' + (ps.revision.price * state.revisionQty.quantity) : '—') + `</div>
+    </div>
+  `;
+  container.innerHTML = html;
 }
 
 /** 渲染结算卡片 */
@@ -1484,6 +1591,7 @@ function renderSummary() {
 function refreshAll() {
   renderGzhServices();
   renderVideoServices();
+  renderOtherServices();
   renderSummary();
 }
 
@@ -1526,27 +1634,21 @@ function toggleLayoutStatic() {
   refreshAll();
 }
 
-/** 切换公众号选题数量 */
-function toggleGzhTopicQty() {
-  state.gzhTopicQty.active = !state.gzhTopicQty.active;
-  if (!state.gzhTopicQty.active) state.gzhTopicQty.quantity = 1;
-  refreshAll();
-}
-function changeGzhTopicQty(delta) {
-  state.gzhTopicQty.quantity = Math.max(1, state.gzhTopicQty.quantity + delta);
-  refreshAll();
-}
-
-/** 切换视频选题数量 */
-function toggleVidTopicQty() {
-  state.vidTopicQty.active = !state.vidTopicQty.active;
-  if (!state.vidTopicQty.active) state.vidTopicQty.quantity = 1;
-  refreshAll();
-}
-function changeVidTopicQty(delta) {
-  state.vidTopicQty.quantity = Math.max(1, state.vidTopicQty.quantity + delta);
-  refreshAll();
-}
+/** 公众号｜选题｜纯输出 */
+function toggleGzhTopicBasic() { state.gzhTopicBasic.active = !state.gzhTopicBasic.active; if (!state.gzhTopicBasic.active) state.gzhTopicBasic.quantity = 1; refreshAll(); }
+function changeGzhTopicBasic(d) { state.gzhTopicBasic.quantity = Math.max(1, state.gzhTopicBasic.quantity + d); refreshAll(); }
+/** 公众号｜选题｜选用+推进 */
+function toggleGzhTopicPremium() { state.gzhTopicPremium.active = !state.gzhTopicPremium.active; if (!state.gzhTopicPremium.active) state.gzhTopicPremium.quantity = 1; refreshAll(); }
+function changeGzhTopicPremium(d) { state.gzhTopicPremium.quantity = Math.max(1, state.gzhTopicPremium.quantity + d); refreshAll(); }
+/** 视频｜选题｜纯输出 */
+function toggleVidTopicBasic() { state.vidTopicBasic.active = !state.vidTopicBasic.active; if (!state.vidTopicBasic.active) state.vidTopicBasic.quantity = 1; refreshAll(); }
+function changeVidTopicBasic(d) { state.vidTopicBasic.quantity = Math.max(1, state.vidTopicBasic.quantity + d); refreshAll(); }
+/** 视频｜选题｜选用+推进 */
+function toggleVidTopicPremium() { state.vidTopicPremium.active = !state.vidTopicPremium.active; if (!state.vidTopicPremium.active) state.vidTopicPremium.quantity = 1; refreshAll(); }
+function changeVidTopicPremium(d) { state.vidTopicPremium.quantity = Math.max(1, state.vidTopicPremium.quantity + d); refreshAll(); }
+/** 修改加计 */
+function toggleRevisionQty() { state.revisionQty.active = !state.revisionQty.active; if (!state.revisionQty.active) state.revisionQty.quantity = 1; refreshAll(); }
+function changeRevisionQty(d) { state.revisionQty.quantity = Math.max(1, state.revisionQty.quantity + d); refreshAll(); }
 
 /** 修改静态图数量 */
 function changeLayoutQty(delta) {
@@ -1560,8 +1662,11 @@ function clearAll() {
   state.copyTier = null;
   state.layoutAll = false;
   state.layoutStatic = { active: false, quantity: 1 };
-  state.gzhTopicQty = { active: false, quantity: 1 };
-  state.vidTopicQty = { active: false, quantity: 1 };
+  state.gzhTopicBasic = { active: false, quantity: 1 };
+  state.gzhTopicPremium = { active: false, quantity: 1 };
+  state.vidTopicBasic = { active: false, quantity: 1 };
+  state.vidTopicPremium = { active: false, quantity: 1 };
+  state.revisionQty = { active: false, quantity: 1 };
   refreshAll();
 }
 
@@ -1632,6 +1737,7 @@ function closeQrModal() {
 function init() {
   renderGzhServices();
   renderVideoServices();
+  renderOtherServices();
   renderSummary();
 }
 
