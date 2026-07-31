@@ -1392,7 +1392,7 @@ function renderGzhServices() {
     <div class="service-item" style="flex-wrap:wrap;cursor:default;" ontouchstart="event.stopPropagation()" onmousedown="event.stopPropagation()">
       <div class="service-info" style="width:100%;">
         <div class="service-name">排版</div>
-        <div class="service-desc">不包含文案 · 提供全部素材即可</div>
+        <div class="service-desc">不包含文案</div>
         <div class="sub-options" style="margin-top:8px;">
           <!-- 提供全部素材 -->
           <div class="service-item ${state.layoutAll ? 'selected' : ''}"
@@ -1400,6 +1400,7 @@ function renderGzhServices() {
                onclick="event.stopPropagation();toggleLayoutAll()">
             <div class="service-info">
               <div class="service-name">纯排版</div>
+              <div class="service-desc">需提供全部素材</div>
             </div>
             <div class="service-price">￥${ps.layoutAll.price}</div>
           </div>
@@ -1409,6 +1410,7 @@ function renderGzhServices() {
                onclick="event.stopPropagation();toggleLayoutStatic()">
             <div class="service-info">
               <div class="service-name">静态图素材制作</div>
+              <div class="service-desc">不包含封面和小标题等需要设计的图片</div>
             </div>
             <div class="service-price">￥${ps.layoutImg.price} / 张</div>
           </div>
